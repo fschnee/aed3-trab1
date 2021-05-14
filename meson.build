@@ -1,7 +1,7 @@
 project('aed3-trab1', 'cpp',
     version : '0.0',
     default_options : [
-        'buildtype=debugoptimized',
+        'buildtype=release',
         'warning_level=3',
         'cpp_std=c++2a',
     ],

@@ -63,7 +63,7 @@ namespace tsp
 {
     // As we'll see later, the fix is needed to make this usable by the parallel implementation.
     template<typename T, std::size_t Cells>
-    inline auto seq_brute_force(const utils::bidimensional_access<T, Cells>& mat, std::optional<int> fix1 = {}) -> std::size_t;
+    inline auto seq_brute_force(const utils::bidimensional_access<T, Cells>& mat, const std::optional<int> fix1 = {}) -> std::size_t;
 
     template<typename T, std::size_t Cells>
     inline auto par_brute_force(const utils::bidimensional_access<T, Cells>& mat) -> std::size_t;
@@ -80,7 +80,7 @@ namespace tsp
 // up the work between multiple threads, by default it is set to nullopt (not present).
 // Setting it to some number will enable it.
 template<typename T, std::size_t Cells>
-inline auto tsp::seq_brute_force(const utils::bidimensional_access<T, Cells>& mat, std::optional<int> fix1) -> std::size_t
+inline auto tsp::seq_brute_force(const utils::bidimensional_access<T, Cells>& mat, const std::optional<int> fix1) -> std::size_t
 {
     auto v = std::array<
         int,
@@ -89,9 +89,10 @@ inline auto tsp::seq_brute_force(const utils::bidimensional_access<T, Cells>& ma
     v[0] = 0;
     v[1] = fix1.value_or(1);
 
+    // This is basically std::iota but skipping a number.
     std::generate(
         v.begin() + 2, v.end() - 1, // - 1 since we want the 0 at the end to stay.
-        [current = 1, skip = fix1.value_or(0)]() mutable {
+        [current = 1, skip = fix1.value_or(1)]() mutable {
             if(current == skip) ++current;
             return current++;
         }
@@ -99,12 +100,12 @@ inline auto tsp::seq_brute_force(const utils::bidimensional_access<T, Cells>& ma
 
     auto lowest_cost = std::numeric_limits<std::size_t>::max();
 
-    auto fix_index = int{ fix1.has_value() };
-    auto fix_value = fix1.value_or( v[0] );
+    const auto fix_index = int{ !!fix1 };
+    const auto fix_value = fix1.value_or( v[0] );
     do {
         auto current_cost = decltype(lowest_cost){0};
         for(std::size_t i = 1; i < v.size(); ++i) {
-            current_cost += mat[ {v[i], v[i - 1]} ];
+            current_cost += mat[ {static_cast<std::size_t>( v[i] ), static_cast<std::size_t>( v[i - 1] )} ];
             if(current_cost >= lowest_cost) break;
         }
 
@@ -132,7 +133,7 @@ inline auto tsp::par_brute_force(const utils::bidimensional_access<T , Cells>& m
         utils::ct_sqrt(Cells) - 1
     >{};
 
-    for(auto i = 0; i < results.size(); ++i)
+    for(decltype(results.size()) i = 0; i < results.size(); ++i)
     {
         results[i] = std::async(
             std::launch::async,
