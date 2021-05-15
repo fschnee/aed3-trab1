@@ -54,7 +54,7 @@
 #include <algorithm> // For std::next_permutation and std::generate.
 #include <optional>
 #include <limits> // For std::numeric_limits.
-#include <future>
+#include <thread>
 #include <array>
 
 #include "utils.hpp"
@@ -128,24 +128,24 @@ inline auto tsp::seq_brute_force(const utils::bidimensional_access<T, Cells>& ma
 template<typename T, std::size_t Cells>
 inline auto tsp::par_brute_force(const utils::bidimensional_access<T , Cells>& mat) -> std::size_t
 {
+    auto workers = std::array<
+        std::thread,
+        utils::ct_sqrt(Cells) - 1
+    >{};
     auto results = std::array<
-        std::future<std::size_t>,
+        std::size_t,
         utils::ct_sqrt(Cells) - 1
     >{};
 
     for(decltype(results.size()) i = 0; i < results.size(); ++i)
     {
-        results[i] = std::async(
-            std::launch::async,
-            [&mat, fix1 = i + 1]{ return seq_brute_force(mat, fix1); }
-        );
+        workers[i] = std::thread{
+            [&, i, fix1 = i + 1]{ results[i] = seq_brute_force(mat, fix1); }
+        };
     }
+    for(auto& worker : workers) { worker.join(); }
 
     auto lowest = std::numeric_limits<std::size_t>::max();
-    for(auto& result : results)
-    {
-        auto res = result.get();
-        if(res < lowest) { lowest = res; }
-    }
+    for(auto& result : results) { if(result < lowest) { lowest = result; } }
     return lowest;
 }
