@@ -15,16 +15,11 @@ namespace utils
 
     // When you need to make a std::array of some type but want to
     // decide the size by the amount of arguments.
-    template <typename T, typename... U>
-    constexpr auto arr(U&&... u)
-    {
-        return std::array<T, sizeof...(U)>{ std::forward<U>(u)... };
-    }
     template <typename... U>
     constexpr auto arr(U&&... u)
     {
         using arr_type = typename head<U...>::type;
-        return arr<arr_type, U...>( std::forward<U>(u)... );
+        return std::array<arr_type, sizeof...(U)>{{ std::forward<U>(u)... }};
     }
 
     // Compile-time square root.

@@ -31,16 +31,20 @@
 // We add a 0, to the end of each permutation and then we can do the
 // following transformation to get the {X, Y}s we should visit:
 //
-//     {0, 2, 1, 4, 3, 5, 0}
-//         |   |  |  |  |  |
-//         |   |  |  |  |  |
-// {       V   |  |  |  |  |
-//     {2, 0}, V  |  |  |  |
-//         {1, 2},V  |  |  |
-//            {4, 1},V  |  |
-//               {3, 4},V  |
-//                  {5, 3} V
-//                     {5, 0}
+//     {0, 1, 2, 3, 4, 5, 0}
+//      |  |  |  |  |  |  |
+//      \  /\ |\ \  |  |  |
+//       \/  \| \ \   ...
+//       /\   \  \ \
+//      /  \  |\  \ \
+//      |  |  | \  \|
+// {    V  V  |  |  |\
+//     {1, 0},V  V  | \
+//           {2, 1},V  V
+//                 {3, 2},
+//                       {4, 3},
+//                             {5, 4},
+//                                   {0, 5}
 // }
 //
 // > Hopefully that was somewhat helpful.
@@ -63,7 +67,10 @@ namespace tsp
 {
     // As we'll see later, the fix is needed to make this usable by the parallel implementation.
     template<typename T, std::size_t Cells>
-    inline auto seq_brute_force(const utils::bidimensional_access<T, Cells>& mat, const std::optional<int> fix1 = {}) -> std::size_t;
+    inline auto seq_brute_force(
+        const utils::bidimensional_access<T, Cells>& mat,
+        const std::optional<int> fix1 = {}
+    ) -> std::size_t;
 
     template<typename T, std::size_t Cells>
     inline auto par_brute_force(const utils::bidimensional_access<T, Cells>& mat) -> std::size_t;
@@ -72,15 +79,17 @@ namespace tsp
 // This is a single threaded (sequential) brute_force, where we can add a fix (fix1),
 // which controls the second element of the permutation array.
 //
-// Setting a fix to the first position makes the function avoid redundant
-// work, by default it is set to 0, but any number < sqrt(cells) would do.
+// Setting a fix to the first position makes the function avoid redundant work.
 //
 // Setting a fix to the second position (fix1) will make the function only check
 // for the combinations beginning in {fix0, fix1, ...}, this is useful for splitting
 // up the work between multiple threads, by default it is set to nullopt (not present).
 // Setting it to some number will enable it.
 template<typename T, std::size_t Cells>
-inline auto tsp::seq_brute_force(const utils::bidimensional_access<T, Cells>& mat, const std::optional<int> fix1) -> std::size_t
+inline auto tsp::seq_brute_force(
+    const utils::bidimensional_access<T, Cells>& mat,
+    const std::optional<int> fix1
+) -> std::size_t
 {
     auto v = std::array<
         int,
@@ -92,7 +101,7 @@ inline auto tsp::seq_brute_force(const utils::bidimensional_access<T, Cells>& ma
     // This is basically std::iota but skipping a number.
     std::generate(
         v.begin() + 2, v.end() - 1, // - 1 since we want the 0 at the end to stay.
-        [current = 1, skip = fix1.value_or(1)]() mutable {
+        [current = 1, skip = v[1]]() mutable {
             if(current == skip) ++current;
             return current++;
         }
@@ -101,8 +110,8 @@ inline auto tsp::seq_brute_force(const utils::bidimensional_access<T, Cells>& ma
     auto lowest_cost = std::numeric_limits<std::size_t>::max();
 
     const auto fix_index = int{ !!fix1 };
-    const auto fix_value = fix1.value_or( v[0] );
-    do {
+    while( std::next_permutation(v.begin() + 1 + fix_index, v.end() - 1) )
+    {
         auto current_cost = decltype(lowest_cost){0};
         for(std::size_t i = 1; i < v.size(); ++i) {
             current_cost += mat[ {static_cast<std::size_t>( v[i] ), static_cast<std::size_t>( v[i - 1] )} ];
@@ -110,9 +119,7 @@ inline auto tsp::seq_brute_force(const utils::bidimensional_access<T, Cells>& ma
         }
 
         if(current_cost < lowest_cost) { lowest_cost = current_cost; }
-
-        std::next_permutation(v.begin(), v.end() - 1); // -1 since we don't want to permute the last 0.
-    } while( v[fix_index] == fix_value);
+    }
 
     return lowest_cost;
 }

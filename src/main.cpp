@@ -1,5 +1,4 @@
 #include "fmt/core.h"
-#include "fmt/ranges.h"
 
 #include "tsp/data.hpp"
 #include "tsp/bf.hpp"
