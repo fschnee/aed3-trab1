@@ -36,6 +36,11 @@ int main()
     fmt::print("p3: {}s => {}, {} expected\n", to<s>(end - start), answer, tsp::data::p3_answer);
 
     start  = sc::now();
+    answer = tsp::par_brute_force(tsp::data::p4);
+    end    = sc::now();
+    fmt::print("p4: {}s => {}, {} expected\n", to<s>(end - start), answer, tsp::data::p4_answer);
+
+    start  = sc::now();
     answer = tsp::par_brute_force(tsp::data::p5);
     end    = sc::now();
     fmt::print("p5: {}s => {}, {} expected\n", to<s>(end - start), answer, tsp::data::p5_answer);
