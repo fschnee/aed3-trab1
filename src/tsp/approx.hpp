@@ -4,10 +4,10 @@
 
 #include <algorithm>
 #include <numeric>
+#include <array>
 #include <set>
 
 #include "utils.hpp"
-
 
 namespace tsp
 {
@@ -18,13 +18,15 @@ namespace tsp
     inline auto tour_mst(const utils::bidimensional_access<T, Cells>& mst, It&& visited_it, std::size_t node = 0) -> void;
 
     template<typename T, std::size_t Cells>
-    inline auto approx(const utils::bidimensional_access<T, Cells>& mat) -> std::size_t
+    inline auto approx(
+        const utils::bidimensional_access<T, Cells>& mat
+    ) -> std::tuple< std::size_t, std::array<std::size_t, utils::ct_sqrt(Cells) + 1> >
     {
         constexpr auto nodes = utils::ct_sqrt(Cells);
 
         const auto mst = prims(mat);
 
-        auto visit_order = std::array<T, nodes + 1>{0}; // + 1 since we want a 0 at the end.
+        auto visit_order = std::array<std::size_t, nodes + 1>{0}; // + 1 since we want a 0 at the end.
         tour_mst(utils::bidimensional_access{ mst }, visit_order.begin() + 1); // + 1 since we want to skip the first 0.
 
         auto cost = 0;
@@ -34,7 +36,7 @@ namespace tsp
                 static_cast<std::size_t>( visit_order[i - 1] )}
             ];
         }
-        return cost;
+        return {cost, visit_order};
     }
 
     template<typename T, std::size_t Cells>
@@ -81,7 +83,7 @@ namespace tsp
     inline auto tour_mst(const utils::bidimensional_access<T, Cells>& mst, It&& visited_it, std::size_t node) -> void
     {
         // For each edge connected to node.
-        for(auto i = 0; i < utils::ct_sqrt(Cells); ++i)
+        for(std::size_t i = 0; i < utils::ct_sqrt(Cells); ++i)
         {
             if(!mst[{node, i}]) continue;
             // Visit it and their children.

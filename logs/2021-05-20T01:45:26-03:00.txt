@@ -1,0 +1,17 @@
+ninja: Entering directory `builddir'
+ninja: no work to do.
+p1: tsp::approx: 13us cost(answer vs min) = 270 vs 253, cicle = {0, 7, 2, 10, 1, 6, 4, 3, 5, 9, 8, 0}
+p2: tsp::approx: 2us cost(answer vs min) = 1272 vs 1248, cicle = {0, 1, 5, 4, 3, 2, 0}
+p3: tsp::approx: 14us cost(answer vs min) = 1519 vs 1194, cicle = {0, 1, 2, 3, 4, 8, 7, 5, 6, 14, 13, 12, 11, 10, 9, 0}
+p4: tsp::approx: 32us cost(answer vs min) = 8308 vs 7013, cicle = {0, 7, 21, 3, 17, 16, 1, 2, 15, 12, 11, 6, 5, 19, 18, 9, 8, 10, 20, 13, 14, 4, 0}
+p5: tsp::approx: 55us cost(answer vs min) = 35019 vs 27603, cicle = {0, 1, 5, 4, 3, 6, 2, 8, 7, 11, 9, 10, 12, 13, 16, 17, 18, 14, 21, 22, 20, 28, 27, 25, 19, 15, 24, 26, 23, 0}
+p1: tsp::par_brute_force: 6ms cost(answer vs min) = 253 vs 253, cicle = {0, 7, 4, 3, 9, 5, 2, 6, 1, 10, 8, 0}
+p2: tsp::par_brute_force: 81us cost(answer vs min) = 1248 vs 1248, cicle = {0, 5, 4, 3, 2, 1, 0}
+p3: tsp::par_brute_force: 75s cost(answer vs min) = 1194 vs 1194, cicle = {0, 1, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 0}
+p4: tsp::par_brute_force: SKIPPED
+p5: tsp::par_brute_force: SKIPPED
+p1: tsp::seq_brute_force: 42ms cost(answer vs min) = 253 vs 253, cicle = {0, 7, 4, 3, 9, 5, 2, 6, 1, 10, 8, 0}
+p2: tsp::seq_brute_force: 3us cost(answer vs min) = 1248 vs 1248, cicle = {0, 5, 4, 3, 2, 1, 0}
+p3: tsp::seq_brute_force: 410s cost(answer vs min) = 1194 vs 1194, cicle = {0, 1, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 0}
+p4: tsp::seq_brute_force: SKIPPED
+p5: tsp::seq_brute_force: SKIPPED

@@ -59,6 +59,7 @@
 #include <optional>
 #include <limits> // For std::numeric_limits.
 #include <thread>
+#include <tuple>
 #include <array>
 
 #include "utils.hpp"
@@ -70,10 +71,12 @@ namespace tsp
     inline auto seq_brute_force(
         const utils::bidimensional_access<T, Cells>& mat,
         const std::optional<int> fix1 = {}
-    ) -> std::size_t;
+    ) -> std::tuple< std::size_t, std::array<std::size_t, utils::ct_sqrt(Cells) + 1> >;
 
     template<typename T, std::size_t Cells>
-    inline auto par_brute_force(const utils::bidimensional_access<T, Cells>& mat) -> std::size_t;
+    inline auto par_brute_force(
+        const utils::bidimensional_access<T, Cells>& mat
+    ) -> std::tuple< std::size_t, std::array<std::size_t, utils::ct_sqrt(Cells) + 1> >;
 }
 
 // This is a single threaded (sequential) brute_force, where we can add a fix (fix1),
@@ -89,10 +92,11 @@ template<typename T, std::size_t Cells>
 inline auto tsp::seq_brute_force(
     const utils::bidimensional_access<T, Cells>& mat,
     const std::optional<int> fix1
-) -> std::size_t
+) -> std::tuple< std::size_t, std::array<std::size_t, utils::ct_sqrt(Cells) + 1> >
 {
+    auto smallest_cicle = std::array<std::size_t, utils::ct_sqrt(Cells) + 1 >{};
     auto v = std::array<
-        int,
+        std::size_t,
         utils::ct_sqrt(Cells) + 1 // + 1 since we want an additional 0 at the end.
     >{};
     v[0] = 0;
@@ -101,7 +105,7 @@ inline auto tsp::seq_brute_force(
     // This is basically std::iota but skipping a number.
     std::generate(
         v.begin() + 2, v.end() - 1, // - 1 since we want the 0 at the end to stay.
-        [current = 1, skip = v[1]]() mutable {
+        [current = std::size_t{1}, skip = v[1]]() mutable {
             if(current == skip) ++current;
             return current++;
         }
@@ -118,10 +122,13 @@ inline auto tsp::seq_brute_force(
             if(current_cost >= lowest_cost) break;
         }
 
-        if(current_cost < lowest_cost) { lowest_cost = current_cost; }
+        if(current_cost < lowest_cost) {
+            lowest_cost = current_cost;
+            smallest_cicle = v;
+        }
     }
 
-    return lowest_cost;
+    return {lowest_cost, smallest_cicle};
 }
 
 // Here we will spawn sqrt(Cells) - 1 threads and each of them will be responsible
@@ -133,14 +140,15 @@ inline auto tsp::seq_brute_force(
 //     Thread 5 is responsible for {0, 5, 1, 2, 3, 4} to {0, 5, 4, 3, 2, 1}
 // And so on.
 template<typename T, std::size_t Cells>
-inline auto tsp::par_brute_force(const utils::bidimensional_access<T , Cells>& mat) -> std::size_t
+inline auto tsp::par_brute_force(const utils::bidimensional_access<T , Cells>& mat)
+-> std::tuple< std::size_t, std::array<std::size_t, utils::ct_sqrt(Cells) + 1> >
 {
     auto workers = std::array<
         std::thread,
         utils::ct_sqrt(Cells) - 1
     >{};
     auto results = std::array<
-        std::size_t,
+        std::tuple< std::size_t, std::array<std::size_t, utils::ct_sqrt(Cells) + 1> >,
         utils::ct_sqrt(Cells) - 1
     >{};
 
@@ -152,7 +160,11 @@ inline auto tsp::par_brute_force(const utils::bidimensional_access<T , Cells>& m
     }
     for(auto& worker : workers) { worker.join(); }
 
-    auto lowest = std::numeric_limits<std::size_t>::max();
-    for(auto& result : results) { if(result < lowest) { lowest = result; } }
-    return lowest;
+    auto lowest_i = 0;
+    for(std::size_t i = 0 ; i < results.size(); ++i) {
+        if( std::get<0>(results[i]) < std::get<0>(results[lowest_i]) ) {
+            lowest_i = i;
+        }
+    }
+    return results[lowest_i];
 }
